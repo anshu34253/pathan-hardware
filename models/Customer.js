@@ -16,12 +16,12 @@ const customerSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
-    match: [/^[6-9]\d{9}$/, 'Please enter a valid 10-digit phone number']
+    match: [/^\d{10}$/, 'Please enter a valid 10-digit phone number']
   },
   address: {
     street: {
       type: String,
-      required: [true, 'Street address is required'],
+      required: false,
       trim: true
     },
     city: {
@@ -31,12 +31,12 @@ const customerSchema = new mongoose.Schema({
     },
     state: {
       type: String,
-      required: [true, 'State is required'],
+      required: false,
       trim: true
     },
     pincode: {
       type: String,
-      required: [true, 'Pincode is required'],
+      required: false,
       match: [/^\d{6}$/, 'Please enter a valid 6-digit pincode']
     }
   },
