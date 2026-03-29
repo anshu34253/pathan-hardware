@@ -42,8 +42,8 @@ const customerSchema = new mongoose.Schema({
   },
   customerType: {
     type: String,
-    enum: ['Retail', 'Wholesale', 'Contractor'],
-    default: 'Retail'
+    enum: ['General', 'Retail', 'Wholesale', 'Contractor'],
+    default: 'General'
   },
   creditLimit: {
     type: Number,
