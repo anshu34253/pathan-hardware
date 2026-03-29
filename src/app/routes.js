@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import LoginPage from "./pages/LoginPage.jsx";
+import SignupPage from "./pages/SignupPage.jsx";
 import LoginSelection from "./pages/LoginSelection.jsx";
 import CustomerLogin from "./pages/CustomerLogin.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
   {
     path: "/customer-login",
     Component: CustomerLogin,
+  },
+  {
+    path: "/signup",
+    Component: SignupPage,
   },
   {
     path: "/admin",

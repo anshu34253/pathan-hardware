@@ -1,61 +1,76 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Mail, Lock } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { authAPI, apiUtils } from '../../services/api';
+import { toast } from 'sonner';
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    // Simple validation for demo
-    if (email === 'customer@demo.com' && password === 'customer') {
-      navigate('/customer');
-    } else {
-      setError('Invalid email or password');
+    try {
+      const response = await authAPI.login({ username, password });
+      if (response.success) {
+        apiUtils.setAuthToken(response.token);
+        apiUtils.setUser(response.user);
+        
+        toast.success(`Welcome back, ${response.user.username}!`);
+        
+        // Navigate based on role
+        if (response.user.role === 'customer') {
+          navigate('/customer');
+        } else {
+          navigate('/admin');
+        }
+      }
+    } catch (error) {
+      toast.error(error.message || 'Invalid username or password');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-slate-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-blue-950">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-slate-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950">
+      <div className="w-full max-w-md p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
           {/* Logo and Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-400 mb-2">
-              Pathan Hardware
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">Customer Login</p>
+            <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">Customer Portal</h1>
+            <p className="text-slate-600 dark:text-slate-400 font-medium">Access your orders and payments</p>
           </div>
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email Input */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email or Phone
+            {/* Username Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Username
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
                   type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-11 rounded-lg border-slate-300 dark:border-slate-600"
-                  placeholder="Enter email or phone"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-10 h-12 rounded-xl"
+                  placeholder="Enter username"
                   required
                 />
               </div>
             </div>
 
             {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Password
               </label>
               <div className="relative">
@@ -64,43 +79,33 @@ export default function CustomerLogin() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-11 rounded-lg border-slate-300 dark:border-slate-600"
+                  className="pl-10 h-12 rounded-xl"
                   placeholder="Enter password"
                   required
                 />
               </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                {error}
-              </div>
-            )}
-
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full h-11 bg-blue-900 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg"
+              disabled={loading}
+              className="w-full h-12 bg-indigo-900 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl text-base font-bold transition-all shadow-md shadow-indigo-200 dark:shadow-none mt-4"
             >
-              Login
+              {loading ? 'Logging in...' : 'Sign In'}
             </Button>
           </form>
 
-          {/* Register Link */}
-          <div className="mt-6 text-center">
+          {/* Signup Link */}
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 text-center">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Don't have an account?{' '}
-              <button className="text-blue-900 dark:text-blue-400 font-medium hover:underline">
-                Register here
+              New customer?{' '}
+              <button
+                onClick={() => navigate('/signup')}
+                className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+              >
+                Create Account
               </button>
-            </p>
-          </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
-            <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
-              Demo Credentials: <span className="font-medium">customer@demo.com / customer</span>
             </p>
           </div>
 
@@ -109,7 +114,7 @@ export default function CustomerLogin() {
             <Button
               variant="ghost"
               onClick={() => navigate('/select-login')}
-              className="text-slate-600 dark:text-slate-400 hover:text-blue-900 dark:hover:text-blue-400"
+              className="text-slate-500 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-400 font-medium"
             >
               ← Back to login options
             </Button>
@@ -119,3 +124,4 @@ export default function CustomerLogin() {
     </div>
   );
 }
+
