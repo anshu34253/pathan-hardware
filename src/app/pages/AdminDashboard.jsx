@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, AlertTriangle, TrendingUp, Package, Loader2 } from 'lucide-react';
+import { DollarSign, AlertTriangle, TrendingUp, Package, Loader2, Briefcase, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { productsAPI, customersAPI, billsAPI } from '../../services/api';
@@ -122,20 +122,20 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Payments Collected */}
-        <Card className="border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
+        {/* Projected Profit */}
+        <Card className="border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-slate-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-              Payments Collected
+            <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Projected Profit
             </CardTitle>
-            <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic">
-              ₹{stats.paid.toLocaleString('en-IN')}
+            <div className="text-3xl font-black text-slate-900 dark:text-slate-100 italic">
+              ₹{(stats.revenue * 0.22).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium">
-              Lifetime total
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 flex items-center gap-1 font-bold">
+              Est. 22% Margin
             </p>
           </CardContent>
         </Card>
@@ -173,22 +173,22 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={salesTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" vertical={false} />
-                  <XAxis 
-                    dataKey="month" 
+                  <XAxis
+                    dataKey="month"
                     stroke="#64748b"
                     tick={{ fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#64748b"
                     tick={{ fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(value) => `₹${value/1000}k`}
+                    tickFormatter={(value) => `₹${value / 1000}k`}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
+                  <Tooltip
+                    contentStyle={{
                       backgroundColor: 'white',
                       border: 'none',
                       borderRadius: '12px',
@@ -196,10 +196,10 @@ export default function AdminDashboard() {
                     }}
                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Sales']}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="sales" 
-                    stroke="#1e3a8a" 
+                  <Line
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#1e3a8a"
                     strokeWidth={4}
                     dot={{ fill: '#1e3a8a', r: 5, strokeWidth: 2, stroke: '#fff' }}
                     activeDot={{ r: 8, strokeWidth: 0 }}
@@ -238,11 +238,10 @@ export default function AdminDashboard() {
                         ₹{transaction.amount.toLocaleString('en-IN')}
                       </p>
                       <span
-                        className={`text-[10px] font-bold px-2 py-1 rounded-md inline-block mt-1 uppercase tracking-tighter ${
-                          transaction.type === 'Paid'
+                        className={`text-[10px] font-bold px-2 py-1 rounded-md inline-block mt-1 uppercase tracking-tighter ${transaction.type === 'Paid'
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
                             : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
-                        }`}
+                          }`}
                       >
                         {transaction.type}
                       </span>

@@ -11,6 +11,8 @@ import ProductManagement from "./pages/ProductManagement.jsx";
 import CustomerManagement from "./pages/CustomerManagement.jsx";
 import Billing from "./pages/Billing.jsx";
 import LendingManagement from "./pages/LendingManagement.jsx";
+import SupplierManagement from "./pages/SupplierManagement.jsx";
+import InvoicePrint from "./pages/InvoicePrint.jsx";
 import Settings from "./pages/Settings.jsx";
 import CustomerDashboard from "./pages/CustomerDashboard.jsx";
 import CustomerProducts from "./pages/CustomerProducts.jsx";
@@ -52,8 +54,13 @@ export const router = createBrowserRouter([
       { path: "customers", Component: CustomerManagement },
       { path: "billing", Component: Billing },
       { path: "lending", Component: LendingManagement },
+      { path: "suppliers", Component: SupplierManagement },
       { path: "settings", Component: Settings },
     ],
+  },
+  {
+    path: "/admin/invoice/:id",
+    Component: InvoicePrint,
   },
   {
     path: "/customer",

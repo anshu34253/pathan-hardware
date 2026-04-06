@@ -5,6 +5,7 @@ import {
   Users, 
   Receipt, 
   HandCoins, 
+  Building,
   Settings as SettingsIcon,
   LogOut,
   User,
@@ -33,6 +34,7 @@ export default function DashboardLayout() {
     { icon: Users, label: 'Customers', path: '/admin/customers' },
     { icon: Receipt, label: 'Billing', path: '/admin/billing' },
     { icon: HandCoins, label: 'Lending', path: '/admin/lending' },
+    { icon: Building, label: 'Suppliers', path: '/admin/suppliers' },
     { icon: SettingsIcon, label: 'Settings', path: '/admin/settings' },
   ];
 

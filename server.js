@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import customerRoutes from './routes/customers.js';
 import billRoutes from './routes/bills.js';
+import supplierRoutes from './routes/suppliers.js';
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/bills', billRoutes);
+app.use('/api/suppliers', supplierRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -57,7 +59,8 @@ app.get('/api', (req, res) => {
       auth: '/api/auth',
       products: '/api/products',
       customers: '/api/customers',
-      bills: '/api/bills'
+      bills: '/api/bills',
+      suppliers: '/api/suppliers'
     },
     documentation: 'https://github.com/anshu34253/pathan-hardware-saas'
   });

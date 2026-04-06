@@ -1,2 +1,3 @@
 Ctrl+Shift+P
 Ctrl + L
+mongodb+srv://anshuchavan:anshuchavhan@pathanhardwarecluster.bjufmhv.mongodb.net/?appName=PathanHardwareCluster

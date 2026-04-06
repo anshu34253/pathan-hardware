@@ -35,7 +35,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    
+
     // Handle network errors
     if (!error.response) {
       console.error('Network error:', error);
@@ -44,7 +44,7 @@ api.interceptors.response.use(
         message: 'Network error. Please check your connection.'
       });
     }
-    
+
     // Handle other errors
     return Promise.reject(error.response?.data || {
       success: false,
@@ -91,6 +91,15 @@ export const billsAPI = {
   update: (id, billData) => api.put(`/bills/${id}`, billData),
   delete: (id) => api.delete(`/bills/${id}`),
   getStats: () => api.get('/bills/stats/summary'),
+};
+
+// Suppliers API
+export const suppliersAPI = {
+  getAll: (params = {}) => api.get('/suppliers', { params }),
+  getById: (id) => api.get(`/suppliers/${id}`),
+  create: (supplierData) => api.post('/suppliers', supplierData),
+  update: (id, supplierData) => api.put(`/suppliers/${id}`, supplierData),
+  delete: (id) => api.delete(`/suppliers/${id}`),
 };
 
 // Utility functions

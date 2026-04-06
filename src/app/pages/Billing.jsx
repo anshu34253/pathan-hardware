@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Receipt, Loader2, User, Package, Calculator } from 'lucide-react';
+import { Plus, Trash2, Receipt, Loader2, User, Package, Calculator, Download, Percent, BadgePercent, Eye } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
+import { useNavigate } from 'react-router';
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import { toast } from 'sonner';
 import { productsAPI, customersAPI, billsAPI } from '../../services/api';
 
 export default function Billing() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -31,6 +33,12 @@ export default function Billing() {
   const [quantity, setQuantity] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('Paid');
   const [billItems, setBillItems] = useState([]);
+  const [recentBills, setRecentBills] = useState([]);
+  
+  // Tax & Discount States
+  const [discount, setDiscount] = useState('0');
+  const [taxRate, setTaxRate] = useState('18');
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,14 +49,16 @@ export default function Billing() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [productsRes, customersRes] = await Promise.all([
+      const [productsRes, customersRes, recentBillsRes] = await Promise.all([
         productsAPI.getAll(),
-        customersAPI.getAll()
+        customersAPI.getAll(),
+        billsAPI.getAll({ limit: 10 })
       ]);
       setProducts(productsRes.data);
       setCustomers(customersRes.data);
+      setRecentBills(recentBillsRes.data);
     } catch (error) {
-      toast.error('Failed to load products or customers');
+      toast.error('Failed to load products, customers or recent bills');
     } finally {
       setLoading(false);
     }
@@ -100,8 +110,24 @@ export default function Billing() {
     setBillItems(billItems.filter((item) => item.id !== id));
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return billItems.reduce((sum, item) => sum + item.total, 0);
+  };
+
+  const calculateDiscount = () => {
+    const amount = parseFloat(discount) || 0;
+    return amount;
+  };
+
+  const calculateTax = () => {
+    const subtotal = calculateSubtotal();
+    const disc = calculateDiscount();
+    const rate = parseFloat(taxRate) || 0;
+    return (subtotal - disc) * (rate / 100);
+  };
+
+  const calculateGrandTotal = () => {
+    return calculateSubtotal() - calculateDiscount() + calculateTax();
   };
 
   const handleGenerateBill = async () => {
@@ -118,7 +144,10 @@ export default function Billing() {
     setSubmitting(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const subtotal = billItems.reduce((sum, item) => sum + item.total, 0);
+      const subtotal = calculateSubtotal();
+      const disc = calculateDiscount();
+      const tax = calculateTax();
+      const total = calculateGrandTotal();
       
       const payload = {
         customer: selectedCustomerId,
@@ -129,30 +158,64 @@ export default function Billing() {
           totalPrice: item.total
         })),
         subtotal: subtotal,
-        totalAmount: subtotal, // Assuming no tax/discount for now
-        paymentType: paymentStatus.toLowerCase(), // 'paid' or 'credit'
-        paidAmount: paymentStatus === 'Paid' ? subtotal : 0,
-        dueAmount: paymentStatus === 'Credit' ? subtotal : 0,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        discount: disc,
+        tax: tax,
+        totalAmount: total,
+        paymentType: paymentStatus.toLowerCase(),
+        paidAmount: paymentStatus === 'Paid' ? total : 0,
+        dueAmount: paymentStatus === 'Credit' ? total : 0,
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         createdBy: user?.id || user?._id,
         status: 'completed'
       };
 
       await billsAPI.create(payload);
-
       
-      toast.success(`Bill generated successfully for ₹${calculateTotal().toLocaleString('en-IN')}`);
+      toast.success(`Bill generated successfully for ₹${total.toLocaleString('en-IN')}`);
       
       // Reset form
       setSelectedCustomerId('');
       setBillItems([]);
       setPaymentStatus('Paid');
-      fetchInitialData(); // Refresh stock
+      setDiscount('0');
+      fetchInitialData(); // Refresh stock and recent list
     } catch (error) {
       toast.error(error.message || 'Failed to generate bill');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const exportToCSV = () => {
+    if (recentBills.length === 0) {
+      toast.error('No bills available to export');
+      return;
+    }
+
+    const headers = ['Bill Number', 'Customer', 'Date', 'Amount (₹)', 'Status', 'Payment Type'];
+    const rows = recentBills.map(bill => [
+      bill.billNumber,
+      bill.customer?.name || 'Unknown',
+      new Date(bill.createdAt).toLocaleDateString(),
+      bill.totalAmount,
+      bill.status,
+      bill.paymentType
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ProBuild_Bills_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Billing data exported as CSV');
   };
 
   if (loading) {
@@ -171,9 +234,9 @@ export default function Billing() {
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Receipt className="w-6 h-6 text-blue-900 dark:text-blue-400" />
-            Create New Bill
+            Modern Billing Engine
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-1 font-medium">Generate real-time invoices and manage inventory instantly</p>
+          <p className="text-slate-600 dark:text-slate-400 mt-1 font-medium">Precision invoicing with automated GST and inventory syncing</p>
         </div>
       </div>
 
@@ -184,7 +247,7 @@ export default function Billing() {
           <Card className="shadow-lg border-none bg-white dark:bg-slate-900 overflow-hidden">
             <CardHeader className="bg-slate-50 dark:bg-slate-800/50 flex flex-row items-center gap-3">
               <User className="w-5 h-5 text-blue-900 dark:text-blue-400" />
-              <CardTitle className="text-lg font-bold dark:text-slate-100">Customer Selection</CardTitle>
+              <CardTitle className="text-lg font-bold dark:text-slate-100">Customer Identity</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-2">
@@ -311,7 +374,7 @@ export default function Billing() {
             <CardHeader className="bg-blue-900 text-white p-6">
               <CardTitle className="text-xl font-black flex items-center gap-3">
                 <Receipt className="w-6 h-6" />
-                SALES INVOICE
+                PROFESSIONAL INVOICE
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6 bg-white dark:bg-slate-900">
@@ -322,30 +385,57 @@ export default function Billing() {
                     {selectedCustomer ? selectedCustomer.name : 'Not Selected'}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
-                  <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total Items</span>
-                  <span className="font-black text-slate-900 dark:text-slate-100">{billItems.length}</span>
+                
+                <div className="space-y-4 pt-2">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 font-bold">Subtotal</span>
+                        <span className="font-bold">₹{calculateSubtotal().toLocaleString('en-IN')}</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500 font-bold flex items-center gap-1">
+                                <BadgePercent className="w-3 h-3" /> Discount (₹)
+                            </span>
+                            <Input 
+                                type="number" 
+                                value={discount} 
+                                onChange={(e) => setDiscount(e.target.value)}
+                                className="w-20 h-8 text-right font-bold text-xs"
+                            />
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500 font-bold flex items-center gap-1">
+                                <Percent className="w-3 h-3" /> GST (%)
+                            </span>
+                            <Input 
+                                type="number" 
+                                value={taxRate} 
+                                onChange={(e) => setTaxRate(e.target.value)}
+                                className="w-20 h-8 text-right font-bold text-xs"
+                            />
+                        </div>
+                    </div>
                 </div>
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl">
                 <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-900/50 dark:text-blue-400 mb-1">Grand Total</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-900/50 dark:text-blue-400 mb-1">Total Payable</span>
                   <span className="text-4xl font-black text-blue-900 dark:text-blue-400 italic">
-                    ₹{calculateTotal().toLocaleString('en-IN')}
+                    ₹{calculateGrandTotal().toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="font-black uppercase tracking-widest text-[10px] text-slate-500">Payment Authorization</Label>
+                <Label className="font-black uppercase tracking-widest text-[10px] text-slate-500">Settlement Method</Label>
                 <RadioGroup value={paymentStatus} onValueChange={setPaymentStatus} className="grid grid-cols-1 gap-3">
-                  <div 
-                    className={`flex items-center space-x-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                      paymentStatus === 'Paid' 
-                      ? 'border-green-500 bg-green-50 dark:bg-green-950/20' 
-                      : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20'
-                    }`}
+                  <div
+                    className={`flex items-center space-x-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${paymentStatus === 'Paid'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                        : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20'
+                      }`}
                     onClick={() => setPaymentStatus('Paid')}
                   >
                     <RadioGroupItem value="Paid" id="paid" className="sr-only" />
@@ -358,12 +448,11 @@ export default function Billing() {
                     </Label>
                   </div>
 
-                  <div 
-                    className={`flex items-center space-x-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                      paymentStatus === 'Credit' 
-                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' 
-                      : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20'
-                    }`}
+                  <div
+                    className={`flex items-center space-x-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${paymentStatus === 'Credit'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                        : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20'
+                      }`}
                     onClick={() => setPaymentStatus('Credit')}
                   >
                     <RadioGroupItem value="Credit" id="credit" className="sr-only" />
@@ -396,7 +485,82 @@ export default function Billing() {
           </Card>
         </div>
       </div>
+
+      {/* Recent Invoices Table */}
+      <Card className="shadow-lg border-none bg-white dark:bg-slate-900 overflow-hidden mt-8">
+        <CardHeader className="bg-slate-50 dark:bg-slate-800/50 flex flex-row items-center justify-between p-6">
+          <div className="flex items-center gap-3">
+            <Receipt className="w-5 h-5 text-blue-900 dark:text-blue-400" />
+            <CardTitle className="text-lg font-bold dark:text-slate-100">Live Billing Stream</CardTitle>
+          </div>
+          <Button
+            onClick={exportToCSV}
+            variant="outline"
+            className="gap-2 border-blue-900 text-blue-900 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/30 font-bold"
+          >
+            <Download className="w-4 h-4" />
+            Export Audit Trial
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900 border-none">
+                  <TableHead className="font-bold p-6">Reference #</TableHead>
+                  <TableHead className="font-bold">Entity</TableHead>
+                  <TableHead className="font-bold">Transaction Date</TableHead>
+                  <TableHead className="font-bold">Amount (₹)</TableHead>
+                  <TableHead className="font-bold">Type</TableHead>
+                  <TableHead className="font-bold">Status</TableHead>
+                  <TableHead className="font-bold text-right p-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentBills.map((bill) => (
+                  <TableRow key={bill._id} className="border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <TableCell className="font-bold text-slate-900 dark:text-slate-100 p-6">{bill.billNumber}</TableCell>
+                    <TableCell className="font-medium">{bill.customer?.name || 'Unknown Entity'}</TableCell>
+                    <TableCell className="text-slate-500 font-medium">{new Date(bill.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-black">₹{bill.totalAmount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        bill.paymentType === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {bill.paymentType}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        bill.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {bill.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right p-6">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/admin/invoice/${bill._id}`)}
+                        className="w-10 h-10 p-0 rounded-xl hover:bg-blue-50 text-blue-600"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {recentBills.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-slate-400 font-medium italic">
+                      No recent transaction records found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

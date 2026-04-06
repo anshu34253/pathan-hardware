@@ -14,30 +14,30 @@ router.get('/', protect, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    
+
     // Build filter
     const filter = {};
-    
+
     if (req.query.customer) {
       filter.customer = req.query.customer;
     }
-    
+
     if (req.query.status) {
       filter.status = req.query.status;
     }
-    
+
     if (req.query.paymentType) {
       filter.paymentType = req.query.paymentType;
     }
-    
+
     if (req.query.paymentStatus) {
       filter.paymentStatus = req.query.paymentStatus;
     }
-    
+
     if (req.query.search) {
       filter.billNumber = { $regex: req.query.search, $options: 'i' };
     }
-    
+
     if (req.query.dateFrom || req.query.dateTo) {
       filter.createdAt = {};
       if (req.query.dateFrom) {
@@ -47,7 +47,7 @@ router.get('/', protect, async (req, res) => {
         filter.createdAt.$lte = new Date(req.query.dateTo);
       }
     }
-    
+
     // Execute query with population
     const bills = await Bill.find(filter)
       .populate('customer', 'name phone email')
@@ -56,9 +56,9 @@ router.get('/', protect, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     const total = await Bill.countDocuments(filter);
-    
+
     res.json({
       success: true,
       count: bills.length,
@@ -85,14 +85,14 @@ router.get('/:id', protect, async (req, res) => {
       .populate('customer', 'name phone email address')
       .populate('items.product', 'name sku unit price')
       .populate('createdBy', 'username');
-    
+
     if (!bill) {
       return res.status(404).json({
         success: false,
         message: 'Bill not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: bill
@@ -112,7 +112,7 @@ router.get('/:id', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   try {
     const billData = req.body;
-    
+
     // Validate customer exists
     const customer = await Customer.findById(billData.customer);
     if (!customer) {
@@ -121,7 +121,7 @@ router.post('/', protect, async (req, res) => {
         message: 'Customer not found'
       });
     }
-    
+
     // Validate products and update stock
     for (const item of billData.items) {
       const product = await Product.findById(item.product);
@@ -131,7 +131,7 @@ router.post('/', protect, async (req, res) => {
           message: `Product not found: ${item.product}`
         });
       }
-      
+
       // Check if enough stock is available
       if (product.quantity < item.quantity) {
         return res.status(400).json({
@@ -139,22 +139,22 @@ router.post('/', protect, async (req, res) => {
           message: `Insufficient stock for product: ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}`
         });
       }
-      
+
       // Set unit price from product if not provided
       if (!item.unitPrice) {
         item.unitPrice = product.price;
       }
-      
+
       // Calculate total price if not provided
       if (!item.totalPrice) {
         item.totalPrice = item.unitPrice * item.quantity;
       }
     }
-    
+
     // Create bill
     const bill = new Bill(billData);
     await bill.save();
-    
+
     // Update product stock
     for (const item of bill.items) {
       await Product.findByIdAndUpdate(
@@ -162,24 +162,24 @@ router.post('/', protect, async (req, res) => {
         { $inc: { quantity: -item.quantity } }
       );
     }
-    
+
     // Update customer's total purchases and credit if needed
     await Customer.findByIdAndUpdate(
       billData.customer,
       {
-        $inc: { 
+        $inc: {
           totalPurchases: bill.totalAmount,
           currentCredit: bill.dueAmount
         }
       }
     );
-    
+
     // Populate and return the created bill
     const populatedBill = await Bill.findById(bill._id)
       .populate('customer', 'name phone email')
       .populate('items.product', 'name sku unit')
       .populate('createdBy', 'username');
-    
+
     res.status(201).json({
       success: true,
       message: 'Bill created successfully',
@@ -187,7 +187,7 @@ router.post('/', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Create bill error:', error);
-    
+
     // Handle validation errors
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
@@ -197,7 +197,7 @@ router.post('/', protect, async (req, res) => {
         errors: messages
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server error while creating bill'
@@ -211,32 +211,32 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     const bill = await Bill.findById(req.params.id);
-    
+
     if (!bill) {
       return res.status(404).json({
         success: false,
         message: 'Bill not found'
       });
     }
-    
+
     // Only allow certain fields to be updated
     const allowedUpdates = ['status', 'notes', 'paidAmount'];
     const updates = {};
-    
+
     Object.keys(req.body).forEach(key => {
       if (allowedUpdates.includes(key)) {
         updates[key] = req.body[key];
       }
     });
-    
+
     const updatedBill = await Bill.findByIdAndUpdate(
       req.params.id,
       updates,
       { new: true, runValidators: true }
     ).populate('customer', 'name phone email')
-     .populate('items.product', 'name sku unit')
-     .populate('createdBy', 'username');
-    
+      .populate('items.product', 'name sku unit')
+      .populate('createdBy', 'username');
+
     res.json({
       success: true,
       message: 'Bill updated successfully',
@@ -257,14 +257,14 @@ router.put('/:id', protect, async (req, res) => {
 router.delete('/:id', protect, async (req, res) => {
   try {
     const bill = await Bill.findById(req.params.id);
-    
+
     if (!bill) {
       return res.status(404).json({
         success: false,
         message: 'Bill not found'
       });
     }
-    
+
     // Restore product stock
     for (const item of bill.items) {
       await Product.findByIdAndUpdate(
@@ -272,20 +272,20 @@ router.delete('/:id', protect, async (req, res) => {
         { $inc: { quantity: item.quantity } }
       );
     }
-    
+
     // Update customer's total purchases and credit
     await Customer.findByIdAndUpdate(
       bill.customer,
       {
-        $inc: { 
+        $inc: {
           totalPurchases: -bill.totalAmount,
           currentCredit: -bill.dueAmount
         }
       }
     );
-    
+
     await Bill.findByIdAndDelete(req.params.id);
-    
+
     res.json({
       success: true,
       message: 'Bill deleted successfully and stock restored'
@@ -307,7 +307,7 @@ router.get('/stats/summary', protect, async (req, res) => {
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startOfYear = new Date(today.getFullYear(), 0, 1);
-    
+
     const [
       totalStats,
       monthlyStats,
@@ -320,14 +320,14 @@ router.get('/stats/summary', protect, async (req, res) => {
         {
           $group: {
             _id: null,
-          totalBills: { $sum: 1 },
-          totalRevenue: { $sum: '$totalAmount' },
-          totalPaid: { $sum: '$paidAmount' },
-          totalDue: { $sum: '$dueAmount' }
+            totalBills: { $sum: 1 },
+            totalRevenue: { $sum: '$totalAmount' },
+            totalPaid: { $sum: '$paidAmount' },
+            totalDue: { $sum: '$dueAmount' }
           }
         }
       ]),
-      
+
       // Monthly statistics
       Bill.aggregate([
         {
@@ -344,7 +344,7 @@ router.get('/stats/summary', protect, async (req, res) => {
           }
         }
       ]),
-      
+
       // Yearly statistics
       Bill.aggregate([
         {
@@ -361,7 +361,7 @@ router.get('/stats/summary', protect, async (req, res) => {
           }
         }
       ]),
-      
+
       // Payment type statistics
       Bill.aggregate([
         {
@@ -372,7 +372,7 @@ router.get('/stats/summary', protect, async (req, res) => {
           }
         }
       ]),
-      
+
       // Status statistics
       Bill.aggregate([
         {
@@ -384,7 +384,7 @@ router.get('/stats/summary', protect, async (req, res) => {
         }
       ])
     ]);
-    
+
     res.json({
       success: true,
       data: {
