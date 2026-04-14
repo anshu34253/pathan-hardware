@@ -25,8 +25,27 @@ const PORT = process.env.PORT || 3001;
 connectDB();
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://pathan-hardware.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.some(ao => origin.startsWith(ao));
+    const isVercel = origin.endsWith('.vercel.app') && origin.includes('pathan-hardware');
+    
+    if (isAllowed || isVercel || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

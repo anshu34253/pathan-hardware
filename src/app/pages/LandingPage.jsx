@@ -223,7 +223,7 @@ export default function LandingPage() {
                 </div>
                 <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Address</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  123 Main Road, Near by bank of india<br />
+                  Main Road, Near by bank of india<br />
                   Sindi(rly), Maharashtra 442105
                 </p>
               </CardContent>
@@ -237,7 +237,7 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Phone</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   +91 91563 42893<br />
-                
+
                 </p>
               </CardContent>
             </Card>
@@ -250,7 +250,7 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Email</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   info@pathanhardware.com<br />
-                  
+
                 </p>
               </CardContent>
             </Card>
@@ -296,7 +296,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Contact Info</h4>
               <ul className="space-y-2 text-slate-400">
-                <li>123 Main Road, Mumbai</li>
+                <li>Main Road, Near by bank of india
+                  Sindi(rly), Maharashtra 442105</li>
                 <li>+91 98765 43210</li>
                 <li>info@pathanhardware.com</li>
               </ul>

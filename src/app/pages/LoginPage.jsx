@@ -16,8 +16,11 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     
+    console.log(`[Diagnostic] Attempting login for user: ${username}`);
     try {
       const response = await authAPI.login({ username, password });
+      console.log('[Diagnostic] Login response:', response);
+      
       if (response.success) {
         apiUtils.setAuthToken(response.token);
         apiUtils.setUser(response.user);
@@ -32,6 +35,12 @@ export default function LoginPage() {
         }
       }
     } catch (error) {
+      console.error('[Diagnostic] Login error details:', {
+        message: error.message,
+        response: error.response,
+        config: error.config,
+        status: error.status
+      });
       toast.error(error.message || 'Invalid username or password');
     } finally {
       setLoading(false);

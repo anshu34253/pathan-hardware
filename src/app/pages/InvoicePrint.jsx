@@ -46,8 +46,8 @@ export default function InvoicePrint() {
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 md:p-8 pb-20 print:p-0 print:bg-white">
       {/* Controls - Hidden during print */}
       <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between print:hidden">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => navigate('/admin/billing')}
           className="gap-2 font-bold text-slate-600"
         >
@@ -68,7 +68,8 @@ export default function InvoicePrint() {
             <div>
               <h1 className="text-4xl font-black text-blue-900 italic tracking-tighter mb-2">PATHAN HARDWARE</h1>
               <div className="space-y-1 text-slate-500 font-bold text-sm">
-                <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> NH-48, Near Toll Plaza, Hubli Bypass</p>
+                <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> Main Road, Near by bank of india
+                  Sindi(rly), Maharashtra 442105</p>
                 <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> +91 98765 43210</p>
                 <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> support@pathanhardware.com</p>
                 <p className="mt-2 text-blue-900">GSTIN: 29ABCDE1234F1Z5</p>
@@ -170,7 +171,8 @@ export default function InvoicePrint() {
         </CardContent>
       </Card>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           @page {
             size: A4;

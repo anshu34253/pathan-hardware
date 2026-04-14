@@ -1,8 +1,37 @@
 import axios from 'axios';
 
+// Helper to normalize the API URL
+const getBaseURL = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  
+  if (!envUrl) {
+    if (import.meta.env.PROD) {
+      console.warn('[ProBuild API] VITE_API_URL is missing in production environment!');
+    }
+    return '/api'; // Fallback to relative path which works if hosted on same domain
+  }
+
+  // Ensure it starts with https if it's a remote URL
+  let url = envUrl.trim();
+  if (url.startsWith('http://') && !url.includes('localhost')) {
+    url = url.replace('http://', 'https://');
+  }
+
+  // Standardize the URL structure
+  url = url.replace(/\/+$/, ''); // Remove trailing slashes
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+
+  return url;
+};
+
+const baseURL = getBaseURL();
+console.log(`[ProBuild API] Instance initialized at: ${baseURL}`);
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

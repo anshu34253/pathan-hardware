@@ -35,7 +35,7 @@ const seedData = async () => {
         // 1. Create Admin Users
         const adminUser = await User.create({
             username: 'anshu',
-            password: 'anshu123', 
+            password: 'anshu123',
             role: 'admin',
             isActive: true
         });
@@ -65,7 +65,7 @@ const seedData = async () => {
                 contactPerson: 'Meera Deshmukh',
                 email: 'contact@ultratech.com',
                 phone: '1800-210-3311',
-                address: { city: 'Mumbai', state: 'Maharashtra', pincode: '400093' },
+                address: { city: '', state: 'Maharashtra', pincode: '400093' },
                 gstNumber: '27AAACU0352F1Z2',
                 paymentTerms: 'Advance'
             },
@@ -178,6 +178,17 @@ const seedData = async () => {
         ]);
 
         console.log('✅ Customers seeded');
+        
+        // 4a. Create Customer User (Linking to Rajesh Developers)
+        const customerUser = await User.create({
+            username: 'test_customer',
+            password: 'customer123',
+            role: 'customer',
+            customerId: seededCustomers[0]._id, // First one is Rajesh Developers
+            isActive: true
+        });
+
+        console.log('✅ Customer user "test_customer" created and linked to Rajesh Developers');
 
         // 5. Create Bills
         const bills = [];
@@ -223,6 +234,7 @@ const seedData = async () => {
         console.log('\n--- SEEDING COMPLETE ---');
         console.log('Admin Account 1: anshu / anshu123');
         console.log('Admin Account 2: test_admin / testpassword');
+        console.log('Customer Account: test_customer / customer123 (Linked: Rajesh Developers)');
         console.log('Total Products: ', seededProducts.length);
         console.log('Total Customers: ', seededCustomers.length);
         console.log('Total Bills: ', bills.length);
