@@ -32,7 +32,7 @@ console.log(`[ProBuild API] Instance initialized at: ${baseURL}`);
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 60000, // Increased to 60s to accommodate Render cold starts
   headers: {
     'Content-Type': 'application/json',
   },
@@ -88,6 +88,7 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  healthCheck: () => api.get('/health').catch(() => null), // Silent fail, just for waking up the server
 };
 
 // Products API

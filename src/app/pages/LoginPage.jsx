@@ -11,14 +11,21 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showWakeUpMessage, setShowWakeUpMessage] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     console.log(`[Diagnostic] Attempting login for user: ${username}`);
+    let wakeUpTimer = setTimeout(() => {
+      setShowWakeUpMessage(true);
+    }, 5000); // Show message after 5 seconds
+
     try {
       const response = await authAPI.login({ username, password });
+      clearTimeout(wakeUpTimer);
+      setShowWakeUpMessage(false);
       console.log('[Diagnostic] Login response:', response);
       
       if (response.success) {
@@ -44,6 +51,8 @@ export default function LoginPage() {
       toast.error(error.message || 'Invalid username or password');
     } finally {
       setLoading(false);
+      setShowWakeUpMessage(false);
+      clearTimeout(wakeUpTimer);
     }
   };
 
@@ -56,6 +65,14 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-400 mb-2">Pathan Hardware</h1>
             <p className="text-slate-600 dark:text-slate-400 font-medium">Store Owner Login</p>
           </div>
+
+          {showWakeUpMessage && (
+            <div className="mb-6 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-center animate-pulse">
+              <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+                The server is waking up... this might take a moment.
+              </p>
+            </div>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">

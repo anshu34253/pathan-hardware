@@ -70,9 +70,9 @@ export default function InvoicePrint() {
               <div className="space-y-1 text-slate-500 font-bold text-sm">
                 <p className="flex items-center gap-2"><MapPin className="w-3 h-3" /> Main Road, Near by bank of india
                   Sindi(rly), Maharashtra 442105</p>
-                <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> +91 98765 43210</p>
+                <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> +91 9156342893</p>
                 <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> support@pathanhardware.com</p>
-                <p className="mt-2 text-blue-900">GSTIN: 29ABCDE1234F1Z5</p>
+                <p className="mt-2 text-blue-900">GSTIN: 27ABJFS9717N1ZA</p>
               </div>
             </div>
             <div className="text-right">
