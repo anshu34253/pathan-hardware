@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Printer, ArrowLeft, Loader2, Download, CheckCircle, MapPin, Phone, Mail } from 'lucide-react';
+import { Printer, ArrowLeft, Loader2, Download, CheckCircle, MapPin, Phone, Mail, Send } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { billsAPI } from '../../services/api';
@@ -11,7 +11,8 @@ export default function InvoicePrint() {
   const navigate = useNavigate();
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
   useEffect(() => {
     fetchBill();
   }, [id]);
@@ -20,6 +21,9 @@ export default function InvoicePrint() {
     try {
       const response = await billsAPI.getById(id);
       setBill(response.data);
+      if (response.data.customer?.email) {
+        setCustomEmail(response.data.customer.email);
+      }
     } catch (error) {
       toast.error('Failed to load invoice details');
       navigate('/admin/billing');
@@ -30,6 +34,18 @@ export default function InvoicePrint() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      setSendingEmail(true);
+      await billsAPI.sendEmail(id, { email: customEmail });
+      toast.success('Invoice sent successfully via email');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to send invoice email');
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   if (loading) {
@@ -53,7 +69,22 @@ export default function InvoicePrint() {
         >
           <ArrowLeft className="w-4 h-4" /> Back to Billing
         </Button>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <input 
+            type="email" 
+            value={customEmail}
+            onChange={(e) => setCustomEmail(e.target.value)}
+            placeholder="Enter email address"
+            className="px-3 py-2 text-sm border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <Button 
+            onClick={handleSendEmail} 
+            disabled={sendingEmail || !customEmail}
+            className="bg-indigo-600 hover:bg-indigo-700 gap-2 font-bold shadow-lg"
+          >
+            {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} 
+            {sendingEmail ? 'Sending...' : 'Email Invoice'}
+          </Button>
           <Button onClick={handlePrint} className="bg-blue-900 hover:bg-blue-800 gap-2 font-bold shadow-lg">
             <Printer className="w-4 h-4" /> Print Invoice
           </Button>

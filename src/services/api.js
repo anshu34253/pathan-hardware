@@ -121,6 +121,7 @@ export const billsAPI = {
   update: (id, billData) => api.put(`/bills/${id}`, billData),
   delete: (id) => api.delete(`/bills/${id}`),
   getStats: () => api.get('/bills/stats/summary'),
+  sendEmail: (id, data) => api.post(`/bills/${id}/send-email`, data),
 };
 
 // Suppliers API

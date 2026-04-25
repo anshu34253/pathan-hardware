@@ -94,7 +94,7 @@ export default function LandingPage() {
                 Your Trusted Partner for Quality Building Materials
               </h2>
               <p className="text-xl text-blue-100 dark:text-slate-300 mb-8">
-                Serving the construction industry with premium quality materials, competitive pricing, and reliable service since 1995.
+                Serving the construction industry with premium quality materials, competitive pricing, and reliable service since 2010.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button
@@ -176,14 +176,14 @@ export default function LandingPage() {
                 About Pathan Hardware & Building Materials
               </h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
-                With over 25 years of experience in the building materials industry, we have established ourselves as a trusted supplier for contractors, builders, and individual homeowners.
+                With over 15 years of experience in the building materials industry, we have established ourselves as a trusted supplier for contractors, builders, and individual homeowners.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-6">
                 Our commitment to quality, competitive pricing, and exceptional customer service has made us the preferred choice for construction projects of all sizes.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                  <div className="text-3xl font-bold text-blue-900 dark:text-blue-400 mb-1">25+</div>
+                  <div className="text-3xl font-bold text-blue-900 dark:text-blue-400 mb-1">15+</div>
                   <div className="text-sm text-slate-600 dark:text-slate-400">Years Experience</div>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">

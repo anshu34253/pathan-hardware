@@ -3,7 +3,7 @@ import Bill from '../models/Bill.js';
 import Customer from '../models/Customer.js';
 import Product from '../models/Product.js';
 import { protect } from '../middleware/auth.js';
-
+import { sendInvoiceEmail } from '../utils/emailService.js';
 const router = express.Router();
 
 // @route   GET /api/bills
@@ -413,6 +413,61 @@ router.get('/stats/summary', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching bill statistics'
+    });
+  }
+});
+
+// @route   POST /api/bills/:id/send-email
+// @desc    Send bill invoice via email
+// @access  Private
+router.post('/:id/send-email', protect, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id)
+      .populate('customer', 'name email phone')
+      .populate('items.product', 'name sku unit');
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: 'Bill not found'
+      });
+    }
+
+    const targetEmail = req.body.email || (bill.customer ? bill.customer.email : null);
+
+    if (!targetEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'No email address provided or found for this customer'
+      });
+    }
+
+    const customerData = {
+      name: bill.customer ? bill.customer.name : 'Valued Customer',
+      email: targetEmail
+    };
+
+    const emailResult = await sendInvoiceEmail(bill, customerData);
+
+    if (emailResult.success) {
+      res.json({
+        success: true,
+        message: 'Invoice sent successfully',
+        messageId: emailResult.messageId
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send email',
+        error: emailResult.error
+      });
+    }
+  } catch (error) {
+    console.error('Send email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while sending email',
+      error: error.message
     });
   }
 });
